@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from elasticsearch import AsyncElasticsearch
 from pydantic import BaseModel
+import os
+
+user = os.environ['ES_USER']
+password = os.environ['ES_PASSWORD']
 
 app = FastAPI()
 es = AsyncElasticsearch('https://127.0.0.1:9200',
-                        basic_auth=('elastic', 'morbius'),
+                        basic_auth=(user, password),
                         verify_certs=False)
 
 
@@ -21,9 +25,13 @@ def get_es_query(query: str):
         }
 
 
+@app.on_event("shutdown")
+async def app_shutdown():
+    await es.close()
+
+
 @app.get('/')
 async def root(body: EsSimpleQueryRequestBody):
     results = await es.search(index='websites',
                               query=get_es_query(body.query))
-    print(results)
-    return {'Message': 'Hello world!'}
+    return results
