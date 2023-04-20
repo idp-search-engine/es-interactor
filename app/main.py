@@ -3,17 +3,25 @@ from elasticsearch import AsyncElasticsearch
 from pydantic import BaseModel
 import os
 
-user = os.environ['ES_USER']
-password = os.environ['ES_PASSWORD']
+es_host = os.environ['ES_HOST']
+es_user = os.environ['ES_USER']
+es_password = os.environ['ES_PASSWORD']
+es_index = os.environ['ES_INDEX']
+es_index_pipeline = os.environ['ES_INDEX_PIPELINE']
 
 app = FastAPI()
-es = AsyncElasticsearch('https://127.0.0.1:9200',
-                        basic_auth=(user, password),
+es = AsyncElasticsearch(es_host,
+                        basic_auth=(es_user, es_password),
                         verify_certs=False)
 
 
 class EsSimpleQueryRequestBody(BaseModel):
     query: str
+
+
+class EsPageBody(BaseModel):
+    original_url: str
+    text: str
 
 
 def get_es_query(query: str):
@@ -30,8 +38,16 @@ async def app_shutdown():
     await es.close()
 
 
-@app.get('/')
-async def root(body: EsSimpleQueryRequestBody):
-    results = await es.search(index='websites',
+@app.get('/query')
+async def query(body: EsSimpleQueryRequestBody):
+    results = await es.search(index=es_index,
                               query=get_es_query(body.query))
     return results
+
+
+@app.post('/pages/add')
+async def add_page(body: EsPageBody):
+    resp = await es.index(index=es_index,
+                          document=body.dict(),
+                          pipeline=es_index_pipeline)
+    return {"id": resp["_id"]}
