@@ -1,0 +1,14 @@
+PUT _ingest/pipeline/website-pipeline
+{
+  "description": "Pipeline to process scraped web pages",
+  "processors": [
+    {
+      "uri_parts": {
+        "field": "original_url"
+      },
+      "html_strip": {
+        "field": "text"
+      }
+    }
+  ]
+}
