@@ -28,7 +28,7 @@ def get_es_query(query: str):
     return {
             "simple_query_string": {
                 "query": query,
-                "fields": ["site_text", "url"]
+                "fields": ["text", "url"]
             }
         }
 
