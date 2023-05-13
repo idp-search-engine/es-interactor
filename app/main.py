@@ -14,17 +14,13 @@ es = AsyncElasticsearch(es_host,
                         basic_auth=(es_user, es_password),
                         verify_certs=False)
 
-
-class EsSimpleQueryRequestBody(BaseModel):
-    query: str
-
-
 class EsPageBody(BaseModel):
     original_url: str
     text: str
 
 
 def get_es_query(query: str):
+    print(query)
     return {
             "simple_query_string": {
                 "query": query,
@@ -39,9 +35,9 @@ async def app_shutdown():
 
 
 @app.get('/query')
-async def query(body: EsSimpleQueryRequestBody):
+async def query(q: str):
     results = await es.search(index=es_index,
-                              query=get_es_query(body.query))
+                              query=get_es_query(q))
     return results
 
 
